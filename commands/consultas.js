@@ -24,34 +24,56 @@ const createChannels = async (server, category, n, groupSize, roleColor) => {
   for (let i = 0; i < groupSize; i++) {
     const c = i + 1 + groupSize * n
 
-    await createTextChannel(server, category, c)
-    await createVoiceChannel(server, category, c)
+    const newRole = await createRole(server, c, roleColor)
 
-    await createRole(server, c, roleColor)
+    await createTextChannel(server, category, c, newRole)
+    await createVoiceChannel(server, category, c, newRole)
   }
 }
 
-const createTextChannel = async (server, category, n) => {
+const createTextChannel = async (server, category, n, role) => {
   await server.channels.create(`consulta-${n}-chat`, {
     type: 'text',
+    permissionOverwrites: [
+      {
+        id: role.id,
+        allow: ['VIEW_CHANNEL', 'SEND_MESSAGES'],
+        deny: ['READ_MESSAGE_HISTORY']
+      },
+      {
+        id: server.roles.everyone.id,
+        deny: ['VIEW_CHANNEL', 'SEND_MESSAGES', 'READ_MESSAGE_HISTORY']
+      }
+    ],
     parent: category
   })
 }
 
-const createVoiceChannel = async (server, category, n) => {
+const createVoiceChannel = async (server, category, n, role) => {
   await server.channels.create(`consulta-${n}-voz`, {
     type: 'voice',
+    permissionOverwrites: [
+      {
+        id: role.id,
+        allow: ['VIEW_CHANNEL', 'CONNECT']
+      },
+      {
+        id: server.roles.everyone.id,
+        deny: ['VIEW_CHANNEL', 'CONNECT']
+      }
+    ],
     parent: category
   })
 }
 
 const createRole = async (server, n, roleColor) => {
-  await server.roles.create({
+  const newRole = await server.roles.create({
     data: {
       name: `consulta-${n}`,
       color: roleColor
     }
   })
+  return newRole
 }
 
 module.exports = {
